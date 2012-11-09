@@ -5,7 +5,9 @@
 typedef unsigned char byte;
 #define STEP 8
 #define LP  1023
+#define NEXT_STEP(t) do{path[max_step-step]=(t);_run(_pass_func[path[max_step-step]](number), step-1);}while(0)
 static byte path[LP+1] = {0};
+static byte mask[2] = {1, 3};
 static int max_step = STEP;
 
 static char* _desc[] = {
@@ -51,19 +53,12 @@ static void print_path(){
 
 static void _run(int number, int step){
 	if(step==max_step){						  // goto step 1
-		path[0] = 1;
-		_run(_pass_func[1](number), step-1);  
-		path[0] = 2;
-		_run(_pass_func[2](number), step-1);  
-	}else if(step==1){
-	if(path[max_step-step-1] != 3){				// last step
-		path[max_step-step] = 3;
-		_run(_pass_func[3](number), step-1);
-	}
-	if(path[max_step-step-1] != 4){
-		path[max_step-step] = 4;
-		_run(_pass_func[4](number), step-1);
-	}
+		NEXT_STEP(1);
+		NEXT_STEP(2);
+	}else if(step==1){						 // last step
+		if(path[max_step-step-1] == 3 || path[max_step-step-1] == 4) return;
+		NEXT_STEP(3);
+		NEXT_STEP(4);
 	}else if(step == 0){ 						// end step
 		if(number == 2012){
 			printf("find it !\n");
@@ -71,27 +66,17 @@ static void _run(int number, int step){
 			exit(0);
 		}
 		return;
-	}else{										// other step
-		int i;
-		for(i=1; i<=4; i++){
-			if(i==path[max_step-step-1])		//self is pass
-				continue;
-			path[max_step-step] = i;
-			_run(_pass_func[i](number), step-1);
-		}
+	}else{									// other step
+		NEXT_STEP(mask[!((path[max_step-step-1]-1)>>1)]);
+		NEXT_STEP(path[max_step-step]+1);
 	}
-}
-
-static void run(int step){
-	_run(2011, step);
 }
 
 int main(int argc, char const *argv[])
 {
 	int i;
 	for(i=2; i<=LP; i++){
-		memset(path, 0, sizeof(path));
-		run(max_step=i);
+		_run(2011, max_step=i);
 		printf("not find it! max step = %d\n", max_step);
 	}
 	return 0;
